@@ -2,15 +2,18 @@ package xml
 
 import (
 	"bytes"
+	// "fmt"
 	"sync"
 )
 
 type Node struct {
-	lock  *sync.RWMutex
-	Name  string            //节点名称
-	Attr  map[string]string //节点属性
-	Value string            //节点值
-	Child []Node            //节点的子节点
+	lock   *sync.RWMutex
+	Name   string            //节点名称
+	Attr   map[string]string //节点属性
+	Text   string            //节点值
+	Parent *Node             //父节点
+	Child  []*Node           //节点的子节点
+	Type   int               //标签类型  1.开始标签，2.结束标签，3.自关闭标签，4.xml头部声明
 }
 
 //得到节点的名称
@@ -21,6 +24,16 @@ func (this *Node) GetName() string {
 //设置节点名称
 func (this *Node) SetName(name string) {
 	this.Name = name
+}
+
+//得到标签中的文本
+func (this *Node) GetText() string {
+	return this.Text
+}
+
+//设置标签中的文本
+func (this *Node) SetText(text string) {
+	this.Text = text
 }
 
 //得到一个属性
@@ -38,16 +51,45 @@ func (this *Node) DelAttr(name string) {
 	delete(this.Attr, name)
 }
 
+//得到父节点
+func (this *Node) GetParent() *Node {
+	return this.Parent
+}
+
+//设置父节点
+func (this *Node) SetParent(node *Node) {
+	this.Parent = node
+}
+
+//得到根节点
+func (this *Node) GetRoot() *Node {
+	if this.Parent == nil {
+		return this
+	} else {
+		root := this.Parent
+		for {
+			if root.Parent == nil {
+				return root
+			} else {
+				root = root.Parent
+			}
+		}
+	}
+}
+
 //添加一个子节点
-func (this *Node) AddChild(node Node) {
+func (this *Node) AddChild(node *Node) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 	if this.Child == nil {
-		this.Child = make([]Node, 0)
+		this.Child = make([]*Node, 0)
 		this.Child = append(this.Child, node)
+		node.SetParent(this)
 		return
 	}
+	node.SetParent(this)
 	this.Child = append(this.Child, node)
+	// fmt.Println("node +++++  ", node)
 }
 
 //删除一个子节点
@@ -56,7 +98,7 @@ func (this *Node) DelChild(name string) bool {
 	defer this.lock.Unlock()
 	for i, nodeOne := range this.Child {
 		if nodeOne.GetName() == name {
-			tempChild := make([]Node, 0)
+			tempChild := make([]*Node, 0)
 			tempChild = append(tempChild, this.Child[:i]...)
 			tempChild = append(tempChild, this.Child[i+1:]...)
 			this.Child = tempChild
@@ -67,18 +109,18 @@ func (this *Node) DelChild(name string) bool {
 }
 
 //得到所有子节点
-func (this *Node) GetChild() []Node {
+func (this *Node) GetChild() []*Node {
 	return this.Child
 }
 
 //得到一个子节点
-func (this *Node) GetChildOne(name string) (Node, bool) {
+func (this *Node) GetChildOne(name string) (*Node, bool) {
 	for _, nodeOne := range this.Child {
 		if nodeOne.GetName() == name {
 			return nodeOne, true
 		}
 	}
-	return Node{}, false
+	return &Node{}, false
 }
 
 //生成xml字符串
@@ -96,7 +138,7 @@ func (n *Node) buildXml(level int) string {
 		buf.WriteString(" ")
 		buf.WriteString(key + "=" + value)
 	}
-	buf.WriteString(">" + n.Value + "\r\n")
+	buf.WriteString(">" + n.Text + "\r\n")
 	for _, node := range n.Child {
 		buf.WriteString(node.buildXml(level + 1))
 	}
@@ -109,6 +151,6 @@ func NewNode() *Node {
 	return &Node{
 		lock:  new(sync.RWMutex),
 		Attr:  make(map[string]string),
-		Child: make([]Node, 0),
+		Child: make([]*Node, 0),
 	}
 }
