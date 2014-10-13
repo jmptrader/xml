@@ -30,16 +30,50 @@ type Parser struct {
 //开始分析
 func (this *Parser) Parse() *Node {
 	var root *Node
+	//记录左尖括号下标
 	startIndex := 0
-	// endIndex := 0
+	//记录右尖括号下标
+	endIndex := 0
 	marker := false
 	for i := 0; i < len(this.data); i++ {
 		if this.data[i] == startDirective {
-			if marker {
-				panic("")
-			} else {
+			if !marker {
 				marker = true
 				startIndex = i
+				//拿到text的内容
+				if endIndex != 0 && endIndex < i && endIndex+1 != i {
+					text := string(this.data[endIndex+1 : i])
+					// if i < 200 {
+					// 	fmt.Println("+++++++++++", text)
+					// }
+
+					//去除空格
+					// text = strings.Replace(text, "\\s", "", -1)
+					text = strings.Replace(text, "\n", "", -1)
+					text = strings.Replace(text, "\t", "", -1)
+					text = strings.Replace(text, "\r", "", -1)
+					// if i < 200 {
+					// 	fmt.Println("===========", text)
+					// }
+					if text != "" && len(root.GetChild()) == 0 {
+						// fmt.Println("++", string(this.data[endIndex+1:i]), startIndex, endIndex)
+						root.SetText(string(this.data[endIndex+1 : i]))
+					}
+				}
+				// if startIndex != 0 && startIndex+1 != i {
+				// 	// fmt.Println(len(this.data), startIndex, i)
+				// 	text := string(this.data[startIndex+1 : i])
+				// 	//去除空格
+				// 	// text = strings.Replace(text, "\\s", "", -1)
+				// 	text = strings.Replace(text, "\n", "", -1)
+				// 	text = strings.Replace(text, "\t", "", -1)
+				// 	text = strings.Replace(text, "\r", "", -1)
+				// 	if text != "" && len(root.GetChild()) == 0 {
+				// 		fmt.Println(string(this.data[startIndex+1 : i]))
+				// 		root.SetText(string(this.data[startIndex+1 : i]))
+				// 	}
+				// }
+
 			}
 		} else if this.data[i] == endDirective {
 
@@ -92,18 +126,27 @@ func (this *Parser) Parse() *Node {
 				// if node.Name == root.GetName() {
 				// 	root = root.GetParent()
 				// }
-			} else {
-				panic("")
+				endIndex = i
 			}
 
 		}
 	}
 	// fmt.Println(root)
+	if len(root.GetRoot().GetChild()) != 0 {
+		root.GetRoot().SetText("")
+	}
 	return root.GetRoot()
 }
 
 //分析一个标记
 func (this *Parser) ParseLine(str string) *Node {
+	// fmt.Println(str, "\n++++++++++++")
+	//去除空格
+	// str = strings.Replace(str, "\\s", "", -1)
+	str = strings.Replace(str, "\n", "", -1)
+	str = strings.Replace(str, "\t", "", -1)
+	str = strings.Replace(str, "\r", "", -1)
+	// fmt.Println(str, "\n===============")
 	node := NewNode()
 	if strings.HasPrefix(str, "?") {
 		node.Type = 4
@@ -113,17 +156,32 @@ func (this *Parser) ParseLine(str string) *Node {
 		node.Type = 2
 		return node
 	}
-	strs := strings.Split(str, " ")
-	node.SetName(strs[0])
-	for i := 1; i < len(strs)-2; i++ {
-		attrOne := strings.Split(strs[i], "=")
-		node.SetAttr(attrOne[0], attrOne[1])
-	}
 	if strings.HasSuffix(str, "/") {
 		node.Type = 3
+		str = str[:len(str)-1]
+	}
+
+	strs := strings.Split(str, " ")
+	// fmt.Println(strs, "\n-------------------------------------", len(strs))
+	node.SetName(strs[0])
+	for i := 1; i < len(strs); i++ {
+		// fmt.Println(strs[i])
+		if strs[i] == "" {
+			continue
+		}
+		attrOne := strings.Split(strs[i], "=")
+		if len(attrOne) == 0 {
+			continue
+		}
+		node.SetAttr(attrOne[0], attrOne[1])
+	}
+
+	if node.Type == 3 {
 		return node
 	}
 	node.Type = 1
+
+	// fmt.Println(node)
 	return node
 }
 

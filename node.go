@@ -138,12 +138,56 @@ func (n *Node) buildXml(level int) string {
 		buf.WriteString(" ")
 		buf.WriteString(key + "=" + value)
 	}
-	buf.WriteString(">" + n.Text + "\r\n")
+	if n.Type == 3 && len(n.Child) == 0 {
+		buf.WriteString(" />" + n.Text + "\r\n")
+		return buf.String()
+	} else {
+		buf.WriteString(">" + n.Text + "\r\n")
+	}
+
 	for _, node := range n.Child {
 		buf.WriteString(node.buildXml(level + 1))
 	}
 	buf.WriteString(tabStr + "</" + n.Name + ">\r\n")
 	return buf.String()
+}
+
+//对比两个node内容是否一样
+func (this *Node) Equals(node *Node) bool {
+	if this.Name != node.Name {
+		return false
+	}
+	if this.Text != node.Text {
+		return false
+	}
+	if len(this.Attr) != len(node.Attr) {
+		return false
+	}
+	for keyOne, valueOne := range this.Attr {
+		if value, ok := node.Attr[keyOne]; ok {
+			if value != valueOne {
+				return false
+			}
+		} else {
+			return false
+		}
+	}
+	if len(this.Child) != len(node.Child) {
+		return false
+	}
+	for _, childOne := range this.Child {
+		find := false
+		for _, nodeChildOne := range node.Child {
+			if childOne.Equals(nodeChildOne) {
+				find = true
+				break
+			}
+		}
+		if !find {
+			return false
+		}
+	}
+	return true
 }
 
 //创建一个新的Node
