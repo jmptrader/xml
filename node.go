@@ -142,7 +142,7 @@ func (n *Node) buildXml(level int) string {
 		buf.WriteString(" />" + n.Text + "\r\n")
 		return buf.String()
 	} else {
-		buf.WriteString(">" + n.Text + "\r\n")
+		buf.WriteString(">" + n.Text)
 	}
 
 	for _, node := range n.Child {

@@ -4,10 +4,27 @@ import (
 	"fmt"
 	"github.com/prestonTao/xml"
 	"io/ioutil"
+	"os"
 )
 
 func main() {
-	example1()
+	example2()
+}
+
+func example2() {
+	data, err := ioutil.ReadFile("strings_91.xml")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	node := xml.Unmarshal(data)
+	// for _, nodeOne := range node.GetChild() {
+	// 	fmt.Println(nodeOne)
+	// }
+	fmt.Println(node.BuildXML())
+
+	newfile, _ := os.Create("temp.xml")
+	newfile.WriteString(node.BuildXML())
+	newfile.Close()
 }
 
 func example1() {
