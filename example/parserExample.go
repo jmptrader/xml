@@ -8,7 +8,16 @@ import (
 )
 
 func main() {
-	example2()
+	// example2()
+	example3()
+}
+
+//
+func example3() {
+	data, _ := ioutil.ReadFile("AndroidManifest.xml")
+	appNode, _ := xml.Unmarshal(data).GetChildOne("application")
+	iconPath := appNode.GetAttr("android:icon")
+	fmt.Println(iconPath)
 }
 
 func example2() {

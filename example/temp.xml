@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nd3_sdk_error_login_fail">登录失败
+    </string>
+    <string name="nd3_account_bind_register_agreement">
+        <u>91通行证使用条款
+        </u>
+    </string>
+    <string name="nd3_sdk_error_account_not_exist">账号不存在或停用
+    </string>
+</resources>

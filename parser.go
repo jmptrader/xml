@@ -173,7 +173,8 @@ func (this *Parser) ParseLine(str string) *Node {
 		if len(attrOne) == 0 {
 			continue
 		}
-		node.SetAttr(attrOne[0], attrOne[1])
+		attrValue := attrOne[1]
+		node.SetAttr(attrOne[0], attrValue[1:len(attrValue)-1])
 	}
 
 	if node.Type == 3 {

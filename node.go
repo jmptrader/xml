@@ -92,8 +92,8 @@ func (this *Node) AddChild(node *Node) {
 	// fmt.Println("node +++++  ", node)
 }
 
-//删除一个子节点
-func (this *Node) DelChild(name string) bool {
+//通过节点名称删除一个子节点，有相同的只删除第一个
+func (this *Node) DelChildForName(name string) bool {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 	for i, nodeOne := range this.Child {
@@ -106,6 +106,26 @@ func (this *Node) DelChild(name string) bool {
 		}
 	}
 	return false
+}
+
+//删除所有相同的子节点
+func (this *Node) DelChild(node Node) (result bool) {
+	this.lock.Lock()
+	defer this.lock.Unlock()
+	newChild := this.Child
+tag:
+	for i, nodeOne := range newChild {
+		if node.Equals(nodeOne) {
+			result = true
+			tempChild := make([]*Node, 0)
+			tempChild = append(tempChild, newChild[:i]...)
+			tempChild = append(tempChild, newChild[i+1:]...)
+			newChild = tempChild
+			goto tag
+		}
+	}
+	this.Child = newChild
+	return
 }
 
 //得到所有子节点
@@ -136,7 +156,7 @@ func (n *Node) buildXml(level int) string {
 	buf.WriteString(n.Name)
 	for key, value := range n.Attr {
 		buf.WriteString(" ")
-		buf.WriteString(key + "=" + value)
+		buf.WriteString(key + "=\"" + value + "\"")
 	}
 	if n.Type == 3 && len(n.Child) == 0 {
 		buf.WriteString(" />" + n.Text + "\r\n")
@@ -145,10 +165,13 @@ func (n *Node) buildXml(level int) string {
 		buf.WriteString(">" + n.Text)
 	}
 
-	for _, node := range n.Child {
+	for i, node := range n.Child {
+		if i == 0 {
+			buf.WriteString("\r\n")
+		}
 		buf.WriteString(node.buildXml(level + 1))
 	}
-	buf.WriteString(tabStr + "</" + n.Name + ">\r\n")
+	buf.WriteString("</" + n.Name + ">\r\n")
 	return buf.String()
 }
 
